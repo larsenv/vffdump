@@ -44,12 +44,12 @@ class FAT(object):
     def __getitem__(self, item):
         if self.fat == 16:
             return self.array[item]
-        else:
-            off = (item // 2) * 3
-            if item & 1:
-                return (self.array[off+1] >> 4) | (self.array[off+2] << 4)
-            else:
-                return self.array[off] | ((self.array[off+1] & 0xf) << 8)
+        off = (item // 2) * 3
+        return (
+            (self.array[off + 1] >> 4) | (self.array[off + 2] << 4)
+            if item & 1
+            else self.array[off] | ((self.array[off + 1] & 0xF) << 8)
+        )
 
     def get_chain(self,start):
         chain = []
@@ -85,7 +85,7 @@ class Directory(object):
                 continue
             if attr & 0xf == 0xf:
                 continue
-            fullname = name.rstrip() + "." + ext.rstrip()
+            fullname = f"{name.rstrip()}.{ext.rstrip()}"
             if fullname[-1] == ".":
                 fullname = fullname[:-1]
             files.append((fullname, attr, start, size))
@@ -165,10 +165,7 @@ class VFF(object):
 
     def read_chain(self, start):
         clusters = self.fat1.get_chain(start)
-        data = ""
-        for c in clusters:
-            data += self.read_cluster(c)
-        return data
+        return "".join(self.read_cluster(c) for c in clusters)
 
 
 
